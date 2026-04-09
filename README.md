@@ -1,10 +1,10 @@
-# 🔐 Auth & RBAC Service
+# Auth & RBAC Service
 
 A production-quality **Authentication and Role-Based Access Control (RBAC)** backend service built with Java and Spring Boot. Features stateless JWT authentication, BCrypt password hashing, audit logging, and a fully documented REST API via Swagger UI.
 
 ---
 
-## 🚀 Tech Stack
+## Tech Stack
 
 | Layer | Technology |
 |---|---|
@@ -19,7 +19,7 @@ A production-quality **Authentication and Role-Based Access Control (RBAC)** bac
 
 ---
 
-## 📁 Project Structure
+## Project Structure
 
 ```
 src/main/java/com/project/authservice/
@@ -40,7 +40,7 @@ src/main/java/com/project/authservice/
 
 ---
 
-## ✨ Features
+## Features
 
 - **User Registration** with input validation and duplicate detection
 - **JWT Login** returning a signed Bearer token (24hr expiry)
@@ -51,10 +51,11 @@ src/main/java/com/project/authservice/
 - **Global Exception Handling** — consistent JSON error responses across all endpoints
 - **Swagger UI** — fully interactive API documentation
 - **Stateless Architecture** — no sessions, no server-side state
+- **HTTP Security Headers** — Spring Security automatically sets `X-Frame-Options: DENY`, `X-Content-Type-Options: nosniff`, and `X-XSS-Protection` on every response
 
 ---
 
-## 🗄️ Database Schema
+## Database Schema
 
 ```
 users
@@ -86,7 +87,7 @@ audit_logs
 
 ---
 
-## 🔒 API Endpoints
+## API Endpoints
 
 ### Authentication (Public)
 | Method | Endpoint | Description |
@@ -111,7 +112,7 @@ audit_logs
 
 ---
 
-## 📬 Example API Requests
+## Example API Requests
 
 ### Register
 ```http
@@ -144,11 +145,12 @@ Authorization: Bearer <your_jwt_token_here>
 
 ---
 
-## ⚙️ Running Locally
+## Running Locally
 
 ### Prerequisites
 - Java 21+
 - PostgreSQL running locally
+- Maven 3.8+ (or use the `./mvnw` wrapper included in the project)
 - IntelliJ IDEA (recommended)
 
 ### Steps
@@ -187,7 +189,24 @@ Roles (`ROLE_USER` and `ROLE_ADMIN`) are seeded automatically on first startup v
 
 ---
 
-## 🔑 JWT Flow
+## Promoting a User to Admin
+
+Admin role assignment is done manually via SQL after the user has registered.
+Open your PostgreSQL client and run:
+
+```sql
+INSERT INTO user_roles (user_id, role_id)
+SELECT u.id, r.id
+FROM users u, roles r
+WHERE u.username = 'yourusername'
+  AND r.name = 'ROLE_ADMIN';
+```
+
+The user must log out and log back in to receive a new token that includes the `ROLE_ADMIN` claim.
+
+---
+
+## JWT Flow
 
 ```
 Client → POST /api/auth/login
@@ -198,11 +217,11 @@ Client → GET /api/user/me
        ← User Profile
 ```
 
-The `JwtAuthenticationFilter` intercepts every request, validates the token, and sets the `SecurityContext` before the request reaches any controller.
+The `JwtAuthenticationFilter` intercepts every request, validates the token, and sets the `SecurityContext` before the request reaches any controller. Sessions are completely disabled — every request is authenticated independently via the token.
 
 ---
 
-## 📖 Swagger UI Preview
+## Swagger UI
 
 Full interactive API documentation available at `/swagger-ui/index.html` after running the app.
 
@@ -210,13 +229,22 @@ All endpoints are grouped by tag (Authentication, User, Admin), schemas are auto
 
 ---
 
-## 👤 Author
+## Known Limitations
 
-**Vishu Choudhary**  
+- Admin role must be assigned manually via SQL — no admin promotion endpoint exists yet
+- No refresh token implementation — token expires after 24 hours and the user must log in again
+- No rate limiting on the login endpoint — brute force protection not implemented
+- IP address in audit logs is currently logged as `SYSTEM` — real client IP extraction not wired in yet
+
+---
+
+## Author
+
+**Vishu Choudhary**
 GitHub: [@vishu1618](https://github.com/vishu1618)
 
 ---
 
-## 📄 License
+## License
 
 This project is open source and available under the [MIT License](LICENSE).
